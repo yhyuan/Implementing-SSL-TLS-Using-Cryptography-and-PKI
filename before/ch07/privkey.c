@@ -1,0 +1,12 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <arpa/inet.h>
+#include "privkey.h"
+#include "hex.h"
+#include "file.h"
+#include "des.h"
+#include "asn1.h"
+#include "digest.h"
+#include "md5.h"
+#include "sha.h"

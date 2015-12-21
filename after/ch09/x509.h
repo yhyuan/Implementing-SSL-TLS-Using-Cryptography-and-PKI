@@ -1,0 +1,104 @@
+#ifndef X509_H
+#define X509_H
+
+#include <time.h>
+#include "huge.h"
+#include "rsa.h"
+#include "dsa.h"
+#include "ecc.h"
+#include "asn1.h"
+
+typedef enum
+{
+  rsa,
+  dsa,
+  dh,
+  ecdsa
+}
+algorithmIdentifier;
+
+typedef enum
+{
+  md5WithRSAEncryption,
+  shaWithRSAEncryption,
+  shaWithDSA,
+  sha256WithECDSA
+}
+signatureAlgorithmIdentifier;
+
+/**
+ * A name (or "distinguishedName") is a list of attribute-value pairs.
+ * Instead of keeping track of all of them, just keep track of
+ * the most interesting ones.
+ */
+typedef struct
+{
+  char *idAtCountryName;
+  char *idAtStateOrProvinceName;
+  char *idAtLocalityName;
+  char *idAtOrganizationName;
+  char *idAtOrganizationalUnitName;
+  char *idAtCommonName;
+}
+name;
+
+typedef struct
+{
+  // TODO deal with the "utcTime" or "GeneralizedTime" choice.
+  time_t notBefore;
+  time_t notAfter;
+}
+validity_period;
+
+typedef huge uniqueIdentifier;
+
+typedef struct
+{
+  algorithmIdentifier algorithm;
+  rsa_key rsa_public_key;
+
+  // DSA or DH parameters, only if algorithm == dsa
+  dsa_params dsa_parameters;
+ 
+  // DSA parameters, only if algorithm == dsa
+  huge dsa_public_key;
+
+  elliptic_curve ecdsa_curve;
+  point ecdsa_public_key;
+} 
+public_key_info;
+
+typedef huge objectIdentifier;
+
+typedef struct
+{
+  int version;
+  huge serialNumber; // This can be much longer than a 4-byte long allows
+  signatureAlgorithmIdentifier signature;
+  name issuer;
+  validity_period validity;
+  name subject;
+  public_key_info subjectPublicKeyInfo;
+  uniqueIdentifier issuerUniqueId;
+  uniqueIdentifier subjectUniqueId;
+  int certificate_authority; // 1 if this is a CA, 0 if not
+}
+x509_certificate;
+
+typedef struct
+{
+  x509_certificate tbsCertificate;
+  unsigned int *hash; // hash code of tbsCertificate
+  int hash_len;
+  signatureAlgorithmIdentifier algorithm;
+  huge rsa_signature_value;
+  dsa_signature dsa_signature_value;
+} 
+signed_x509_certificate;
+
+char *parse_x509_chain( unsigned char *buffer,
+                        int pdu_length,
+                        public_key_info *server_public_key );
+int parse_name( name *target, struct asn1struct *source );
+
+#endif
